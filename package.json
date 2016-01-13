@@ -2,9 +2,8 @@
   "name": "rgrjs",
   "version": "1.0.0",
   "description": "A collection of educational resources about React, GraphQL and Relay",
-  "main": "index.js",
   "scripts": {
-    "start": "./node_modules/.bin/babel-node --presets react,es2015 server.js"
+    "start": "babel-node --presets react,es2015 server.js"
   },
   "author": "",
   "license": "ISC",
@@ -18,5 +17,8 @@
     "react": "^0.14.6",
     "react-dom": "^0.14.6",
     "webpack": "^1.12.11"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.4.0"
   }
 }
