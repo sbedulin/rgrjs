@@ -8,25 +8,14 @@ let port = 3000;
 
 app.use(express.static('public'));
 
-let db;
-MongoClient.connect(process.env.MONGO_URL, (err, database) => {
-    if(err) throw err;
 
-    db = database;
+(async () => {
+    let db = await MongoClient.connect(process.env.MONGO_URL);
+
     app.use('/graphql', GraphQLHTTP({
         schema: schema(db),
         graphiql: true
     }));
 
     app.listen(port, () => console.log('Server listening on %s', port));
-});
-
-/* REST endpoint
-app.get('/data/links', (req, res) => {
-    db.collection('links').find({}).toArray((err, links) => {
-        if(err) throw err;
-
-        res.json(links);
-    });
-});
-*/
+})();
