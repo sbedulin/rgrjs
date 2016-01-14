@@ -12,4 +12,4 @@ Webpack
 
 MongoDB
 
-1. SET MONGO_URL=mongodb://<user>:<password>@<url>
+1. `SET MONGO_URL=mongodb://<user>:<password>@<url>`
