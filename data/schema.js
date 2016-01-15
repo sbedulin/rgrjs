@@ -25,7 +25,11 @@ let Schema = (db) => {
                 resolve: (obj) => obj._id
             },
             title: { type: GraphQLString },
-            url:   { type: GraphQLString }
+            url:   { type: GraphQLString },
+            createdAt: {
+                type: GraphQLString,
+                resolve: (obj) => new Date(obj.createdAt).toISOString()
+            }
         })
     });
 
@@ -42,7 +46,9 @@ let Schema = (db) => {
                 type: linkConnection.connectionType,
                 args: connectionArgs,
                 resolve: (_, args) => connectionFromPromisedArray(
-                    db.collection('links').find({}).limit(args.first).toArray(),
+                    db.collection('links').find({})
+                        .sort({ createdAt: -1 })
+                        .limit(args.first).toArray(),
                     args
                 )
             }
@@ -67,7 +73,11 @@ let Schema = (db) => {
             }
         },
         mutateAndGetPayload: ({ title, url }) => {
-            return db.collection('links').insertOne({ title, url });
+            return db.collection('links').insertOne({
+                title,
+                url,
+                createdAt: Date.now()
+            });
         }
     });
     let schema = new GraphQLSchema({
