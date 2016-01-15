@@ -10,13 +10,35 @@ import {
 
 import {
     globalIdField,
+    fromGlobalId,
+    nodeDefinitions,
     connectionDefinitions,
     connectionArgs,
     connectionFromPromisedArray,
     mutationWithClientMutationId
 } from 'graphql-relay';
 
+class Store {}
+
 let Schema = (db) => {
+    let store = new Store();
+
+    let nodeDefs = nodeDefinitions(
+        (globalId) => {
+            let {type} = fromGlobalId(globalId);
+            if(type === 'Store') {
+                return store;
+            }
+            return null;
+        },
+        (obj) => {
+            if(obj instanceof Store) {
+                return storeType;
+            }
+            return null;
+        }
+    );
+
     let linkType = new GraphQLObjectType({
         name: 'Link',
         fields: () => ({
@@ -44,18 +66,28 @@ let Schema = (db) => {
             id: globalIdField('Store'),
             linkConnection: {
                 type: linkConnection.connectionType,
-                args: connectionArgs,
-                resolve: (_, args) => connectionFromPromisedArray(
-                    db.collection('links').find({})
-                        .sort({ createdAt: -1 })
-                        .limit(args.first).toArray(),
-                    args
-                )
+                args: {
+                    ...connectionArgs,
+                    query: { type: GraphQLString }
+                },
+                resolve: (_, args) => {
+                    let findParams = {};
+                    if(args.query) {
+                        findParams.title = new RegExp(args.query, 'i');
+                    }
+                    return connectionFromPromisedArray(
+                        db.collection('links')
+                          .find(findParams)
+                          .sort({ createdAt: -1 })
+                          .limit(args.first).toArray(),
+                        args
+                    );
+                }
             }
-        })
+        }),
+        interfaces: [nodeDefs.nodeInterface]
     });
 
-    let store = {};
     let createLinkMutation = mutationWithClientMutationId({
         name: 'CreateLink',
         inputFields: {
@@ -84,6 +116,7 @@ let Schema = (db) => {
         query: new GraphQLObjectType({
             name: 'Query',
             fields: () => ({
+                node: nodeDefs.nodeField,
                 store: {
                     type: storeType,
                     resolve: () => store
