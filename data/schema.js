@@ -3,25 +3,45 @@ import {
     GraphQLObjectType,
     GraphQLInt,
     GraphQLString,
-    GraphQLList
+    GraphQLList,
+    GraphQLNonNull,
+    GraphQLID
 } from 'graphql';
+
+import {
+    connectionDefinitions,
+    connectionArgs,
+    connectionFromPromisedArray
+} from 'graphql-relay';
 
 let Schema = (db) => {
     let linkType = new GraphQLObjectType({
         name: 'Link',
         fields: () => ({
-            _id:   { type: GraphQLString },
+            id: {
+                type: new GraphQLNonNull(GraphQLID),
+                resolve: (obj) => obj._id
+            },
             title: { type: GraphQLString },
             url:   { type: GraphQLString }
         })
     });
 
+    let linkConnection = connectionDefinitions({
+        name: 'Link',
+        nodeType: linkType
+    });
+
     let storeType = new GraphQLObjectType({
         name: 'Store',
         fields: () => ({
-            links: {
-                type: new GraphQLList(linkType),
-                resolve: () => db.collection('links').find({}).toArray()
+            linkConnection: {
+                type: linkConnection.connectionType,
+                args: connectionArgs,
+                resolve: (_, args) => connectionFromPromisedArray(
+                    db.collection('links').find({}).toArray(),
+                    args
+                )
             }
         })
     });
